@@ -1,1 +1,92 @@
+# =========================
+# Python bytecode
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# =========================
+# Virtual environments
+# =========================
 venv/
+.env/
+.venv/
+env/
+ENV/
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Jupyter Notebook
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# SQLite / databases
+# =========================
+data/db/*.db
+*.sqlite
+*.sqlite3
+
+# =========================
+# Data files (IMPORTANT)
+# =========================
+# Ignore large/raw data
+data/raw/*
+data/interim/*
+
+# But keep folder structure
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/db/.gitkeep
+
+# =========================
+# Environment variables
+# =========================
+.env
+.env.*
+
+# =========================
+# Streamlit
+# =========================
+.streamlit/
+
+# =========================
+# VSCode / IDE
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# Mac/Linux temp files
+# =========================
+*.swp
+*.swo
+
+# =========================
+# Build / cache artifacts
+# =========================
+*.egg-info/
+dist/
+build/
+
+# =========================
+# Testing / coverage
+# =========================
+.coverage
+htmlcov/
+.pytest_cache/
+
+# =========================
+# Optional: Keep sample data (if you later want)
+# =========================
+# !data/raw/sample_*.ndjson
