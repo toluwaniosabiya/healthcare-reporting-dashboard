@@ -47,6 +47,7 @@ def load_dataframe(
 def build_database(
     db_path: str | Path,
     schema_path: str | Path,
+    views_path: str | Path,
     df_patients: pd.DataFrame,
     df_encounters: pd.DataFrame,
     df_conditions: pd.DataFrame,
@@ -54,7 +55,7 @@ def build_database(
     df_data_quality_audit: pd.DataFrame,
 ) -> None:
     """
-    Build the SQLite database from transformed DataFrames.
+    Build the SQLite database from transformed DataFrames and reporting views.
     """
     conn = get_connection(db_path)
 
@@ -66,6 +67,8 @@ def build_database(
         load_dataframe(conn, df_conditions, "conditions")
         load_dataframe(conn, df_observations, "observations")
         load_dataframe(conn, df_data_quality_audit, "data_quality_audit")
+
+        execute_sql_file(conn, views_path)
 
         conn.commit()
     finally:
@@ -85,6 +88,7 @@ if __name__ == "__main__":
     raw_dir = project_root / "data" / "raw"
     db_path = project_root / "data" / "db" / "healthcare_reporting.db"
     schema_path = project_root / "sql" / "schema.sql"
+    views_path = project_root / "sql" / "views.sql"
 
     patient_resources = read_resource_group(raw_dir, "Patient")
     encounter_resources = read_resource_group(raw_dir, "Encounter")
@@ -106,6 +110,7 @@ if __name__ == "__main__":
     build_database(
         db_path=db_path,
         schema_path=schema_path,
+        views_path=views_path,
         df_patients=df_patients,
         df_encounters=df_encounters,
         df_conditions=df_conditions,
