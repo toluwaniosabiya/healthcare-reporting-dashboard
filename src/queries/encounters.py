@@ -184,33 +184,45 @@ def get_top_encounter_types(
 def get_encounter_class_summary(
     db_path: str | Path,
     selected_years: list[str] | None = None,
-    limit: int = 15,
+    # limit: int = 15,
 ) -> pd.DataFrame:
-    limit = max(1, int(limit))
+    # limit = max(1, int(limit))
 
     if not selected_years:
-        query = f"""
+        query = """
             SELECT
-                COALESCE(encounter_class, 'Unknown') AS encounter_class,
+                CASE encounter_class
+                    WHEN 'AMB' THEN 'Ambulatory'
+                    WHEN 'IMP' THEN 'Inpatient'
+                    WHEN 'EMER' THEN 'Emergency'
+                    WHEN 'HH' THEN 'Home Health'
+                    WHEN 'VR' THEN 'Virtual'
+                    ELSE 'Other'
+                END AS encounter_class,
                 COUNT(*) AS encounter_count
             FROM encounters
-            GROUP BY COALESCE(encounter_class, 'Unknown')
+            GROUP BY 1
             ORDER BY encounter_count DESC
-            LIMIT {limit}
         """
         return run_query(db_path, query)
 
     placeholders = _build_in_clause_placeholders(selected_years)
     query = f"""
         SELECT
-            COALESCE(encounter_class, 'Unknown') AS encounter_class,
+            CASE encounter_class
+                WHEN 'AMB' THEN 'Ambulatory'
+                WHEN 'IMP' THEN 'Inpatient'
+                WHEN 'EMER' THEN 'Emergency'
+                WHEN 'HH' THEN 'Home Health'
+                WHEN 'VR' THEN 'Virtual'
+                ELSE 'Other'
+            END AS encounter_class,
             COUNT(*) AS encounter_count
         FROM encounters
         WHERE encounter_start IS NOT NULL
           AND substr(encounter_start, 1, 4) IN ({placeholders})
-        GROUP BY COALESCE(encounter_class, 'Unknown')
+        GROUP BY 1
         ORDER BY encounter_count DESC
-        LIMIT {limit}
     """
     return run_query(db_path, query, params=tuple(selected_years))
 

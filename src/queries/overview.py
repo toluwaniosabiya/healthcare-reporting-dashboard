@@ -96,26 +96,6 @@ def get_overview_metrics(
             ) AS avg_encounter_duration_minutes,
             (
                 SELECT ROUND(
-                    100.0 * COUNT(*) / NULLIF(
-                        (
-                            SELECT COUNT(DISTINCT patient_id)
-                            FROM encounters
-                            WHERE substr(encounter_start, 1, 4) IN ({placeholders})
-                        ),
-                        0
-                    ),
-                    2
-                )
-                FROM (
-                    SELECT patient_id
-                    FROM encounters
-                    WHERE substr(encounter_start, 1, 4) IN ({placeholders})
-                    GROUP BY patient_id
-                    HAVING COUNT(*) >= 5
-                )
-            ) AS high_utilizer_pct,
-            (
-                SELECT ROUND(
                     100.0 * SUM(
                         CASE
                             WHEN encounter_start IS NOT NULL
@@ -170,6 +150,64 @@ def get_top_conditions(
 
     num_in_clauses = query.count("IN (")
     params = tuple(selected_years) * num_in_clauses
+    return run_query(db_path, query, params=params)
+
+
+def get_patient_utilization_pct(
+    db_path: str | Path,
+    threshold: int,
+    selected_years: list[str] | None = None,
+) -> pd.DataFrame:
+    """
+    Return the percentage of distinct patients who have at least `threshold`
+    encounters within the selected year(s), or across all data if no years are selected.
+    """
+    threshold = max(0, int(threshold))
+
+    if not selected_years:
+        query = """
+            SELECT
+                ROUND(
+                    100.0 * COUNT(*) / NULLIF(
+                        (SELECT COUNT(DISTINCT patient_id) FROM encounters),
+                        0
+                    ),
+                    2
+                ) AS patient_utilization_pct
+            FROM (
+                SELECT patient_id
+                FROM encounters
+                GROUP BY patient_id
+                HAVING COUNT(*) >= ?
+            )
+        """
+        return run_query(db_path, query, params=(threshold,))
+
+    placeholders = _build_in_clause_placeholders(selected_years)
+
+    query = f"""
+        SELECT
+            ROUND(
+                100.0 * COUNT(*) / NULLIF(
+                    (
+                        SELECT COUNT(DISTINCT patient_id)
+                        FROM encounters
+                        WHERE substr(encounter_start, 1, 4) IN ({placeholders})
+                    ),
+                    0
+                ),
+                2
+            ) AS patient_utilization_pct
+        FROM (
+            SELECT patient_id
+            FROM encounters
+            WHERE substr(encounter_start, 1, 4) IN ({placeholders})
+            GROUP BY patient_id
+            HAVING COUNT(*) >= ?
+        )
+    """
+
+    params = tuple(selected_years) + tuple(selected_years) + (threshold,)
     return run_query(db_path, query, params=params)
 
 
@@ -233,3 +271,7 @@ if __name__ == "__main__":
 
     print("Data quality summary:")
     print(get_data_quality_summary(db_path).head())
+
+    print("Patient utilization %:")
+    print(get_patient_utilization_pct(db_path, threshold=5))
+    print()

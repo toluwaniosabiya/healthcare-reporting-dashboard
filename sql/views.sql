@@ -27,21 +27,6 @@ SELECT
     ) AS avg_encounter_duration_minutes,
     (
         SELECT ROUND(
-            100.0 * COUNT(*) / NULLIF(
-                (SELECT COUNT(DISTINCT patient_id) FROM encounters),
-                0
-            ),
-            2
-        )
-        FROM (
-            SELECT patient_id
-            FROM encounters
-            GROUP BY patient_id
-            HAVING COUNT(*) >= 5
-        )
-    ) AS high_utilizer_pct,
-    (
-        SELECT ROUND(
             100.0 * SUM(
                 CASE
                     WHEN encounter_start IS NOT NULL
