@@ -19,8 +19,7 @@ db_path = project_root / "data" / "db" / "healthcare_reporting.db"
 st.title("🩺 Clinical Insights")
 st.markdown(
     """
-    Clinical reporting view focused on condition prevalence, observation patterns,
-    and the mix of numeric versus text-based observations.
+    Clinical reporting view focused on condition prevalence and observation patterns.
     """
 )
 
@@ -137,25 +136,8 @@ with row2_col1:
         st.info("No condition summary available.")
 
 with row2_col2:
-    st.subheader("Observation Value Category Mix")
+    st.subheader("Observation Summary Table")
     if not df_top_observation_types.empty:
-        value_mix = (
-            df_top_observation_types.groupby("value_category", as_index=False)[
-                "observation_count"
-            ]
-            .sum()
-            .sort_values("observation_count", ascending=False)
-        )
-
-        fig_value_mix = px.pie(
-            value_mix,
-            names="value_category",
-            values="observation_count",
-            title="Observation Value Category Mix",
-        )
-        st.plotly_chart(fig_value_mix, use_container_width=True)
-
-        with st.expander("View observation type summary table"):
-            st.dataframe(df_top_observation_types, use_container_width=True)
+        st.dataframe(df_top_observation_types, use_container_width=True)
     else:
-        st.info("No observation value category data available.")
+        st.info("No observation summary available.")
