@@ -25,6 +25,35 @@ SELECT
         FROM encounters
         WHERE encounter_duration_minutes IS NOT NULL
     ) AS avg_encounter_duration_minutes,
+    (
+        SELECT ROUND(
+            100.0 * COUNT(*) / NULLIF(
+                (SELECT COUNT(DISTINCT patient_id) FROM encounters),
+                0
+            ),
+            2
+        )
+        FROM (
+            SELECT patient_id
+            FROM encounters
+            GROUP BY patient_id
+            HAVING COUNT(*) >= 5
+        )
+    ) AS high_utilizer_pct,
+    (
+        SELECT ROUND(
+            100.0 * SUM(
+                CASE
+                    WHEN encounter_start IS NOT NULL
+                        AND encounter_end IS NOT NULL
+                        AND encounter_duration_minutes IS NOT NULL
+                    THEN 1 ELSE 0
+                END
+            ) / NULLIF(COUNT(*), 0),
+            2
+        )
+        FROM encounters
+    ) AS encounter_data_completeness_pct,
     (SELECT COUNT(*) FROM data_quality_audit) AS total_data_quality_issues;
 
 CREATE VIEW vw_encounters_by_month AS

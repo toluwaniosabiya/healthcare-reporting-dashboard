@@ -38,26 +38,13 @@ def run_query(
 def _build_in_clause_placeholders(values: list[str]) -> str:
     """
     Build a comma-separated placeholder string for SQL IN clauses.
-
-    Example:
-        ['2020', '2021'] -> '?, ?'
     """
     return ", ".join(["?"] * len(values))
 
 
-def get_available_years(db_path: str | Path) -> list[str]:
-    query = """
-        SELECT DISTINCT substr(encounter_start, 1, 4) AS encounter_year
-        FROM encounters
-        WHERE encounter_start IS NOT NULL
-        ORDER BY encounter_year
-    """
-    df = run_query(db_path, query)
-    return df["encounter_year"].dropna().astype(str).tolist()
-
-
 def get_overview_metrics(
-    db_path: str | Path, selected_years: list[str] | None = None
+    db_path: str | Path,
+    selected_years: list[str] | None = None,
 ) -> pd.DataFrame:
     """
     Return overview metrics.
@@ -108,124 +95,44 @@ def get_overview_metrics(
                   AND encounter_duration_minutes IS NOT NULL
             ) AS avg_encounter_duration_minutes,
             (
+                SELECT ROUND(
+                    100.0 * COUNT(*) / NULLIF(
+                        (
+                            SELECT COUNT(DISTINCT patient_id)
+                            FROM encounters
+                            WHERE substr(encounter_start, 1, 4) IN ({placeholders})
+                        ),
+                        0
+                    ),
+                    2
+                )
+                FROM (
+                    SELECT patient_id
+                    FROM encounters
+                    WHERE substr(encounter_start, 1, 4) IN ({placeholders})
+                    GROUP BY patient_id
+                    HAVING COUNT(*) >= 5
+                )
+            ) AS high_utilizer_pct,
+            (
+                SELECT ROUND(
+                    100.0 * SUM(
+                        CASE
+                            WHEN encounter_start IS NOT NULL
+                             AND encounter_end IS NOT NULL
+                             AND encounter_duration_minutes IS NOT NULL
+                            THEN 1 ELSE 0
+                        END
+                    ) / NULLIF(COUNT(*), 0),
+                    2
+                )
+                FROM encounters
+                WHERE substr(encounter_start, 1, 4) IN ({placeholders})
+            ) AS encounter_data_completeness_pct,
+            (
                 SELECT COUNT(*)
                 FROM data_quality_audit
             ) AS total_data_quality_issues
-    """
-
-    num_in_clauses = query.count("IN (")
-    params = tuple(selected_years) * num_in_clauses
-    return run_query(db_path, query, params=params)
-
-
-def get_encounters_by_year_month(
-    db_path: str | Path,
-    selected_years: list[str] | None = None,
-) -> pd.DataFrame:
-    if not selected_years:
-        query = """
-            SELECT * FROM vw_encounters_by_year_month
-        """
-        return run_query(db_path, query)
-
-    placeholders = _build_in_clause_placeholders(selected_years)
-    query = f"""
-        SELECT
-            substr(encounter_start, 1, 7) AS encounter_year_month,
-            COUNT(*) AS encounter_count
-        FROM encounters
-        WHERE encounter_start IS NOT NULL
-          AND substr(encounter_start, 1, 4) IN ({placeholders})
-        GROUP BY substr(encounter_start, 1, 7)
-        ORDER BY encounter_year_month
-    """
-
-    num_in_clauses = query.count("IN (")
-    params = tuple(selected_years) * num_in_clauses
-    return run_query(db_path, query, params=params)
-
-
-def get_encounters_by_year(
-    db_path: str | Path,
-    selected_years: list[str] | None = None,
-) -> pd.DataFrame:
-    if not selected_years:
-        query = """
-            SELECT * FROM vw_encounters_by_year
-        """
-        return run_query(db_path, query)
-
-    placeholders = _build_in_clause_placeholders(selected_years)
-    query = f"""
-        SELECT
-            substr(encounter_start, 1, 4) AS encounter_year,
-            COUNT(*) AS encounter_count
-        FROM encounters
-        WHERE encounter_start IS NOT NULL
-          AND substr(encounter_start, 1, 4) IN ({placeholders})
-        GROUP BY substr(encounter_start, 1, 4)
-        ORDER BY encounter_year
-    """
-
-    num_in_clauses = query.count("IN (")
-    params = tuple(selected_years) * num_in_clauses
-    return run_query(db_path, query, params=params)
-
-
-def get_encounters_by_month(
-    db_path: str | Path,
-    selected_years: list[str] | None = None,
-) -> pd.DataFrame:
-    if not selected_years:
-        query = """
-            SELECT * FROM vw_encounters_by_month
-        """
-        return run_query(db_path, query)
-
-    placeholders = _build_in_clause_placeholders(selected_years)
-    query = f"""
-        SELECT
-            substr(encounter_start, 6, 2) AS encounter_month,
-            COUNT(*) AS encounter_count
-        FROM encounters
-        WHERE encounter_start IS NOT NULL
-          AND substr(encounter_start, 1, 4) IN ({placeholders})
-        GROUP BY substr(encounter_start, 6, 2)
-        ORDER BY encounter_month
-    """
-
-    num_in_clauses = query.count("IN (")
-    params = tuple(selected_years) * num_in_clauses
-    return run_query(db_path, query, params=params)
-
-
-def get_top_encounter_types(
-    db_path: str | Path,
-    selected_years: list[str] | None = None,
-    limit: int = 10,
-) -> pd.DataFrame:
-    limit = int(limit)
-
-    if not selected_years:
-        query = f"""
-            SELECT *
-            FROM vw_top_encounter_types
-            LIMIT {limit}
-        """
-        return run_query(db_path, query)
-
-    placeholders = _build_in_clause_placeholders(selected_years)
-    query = f"""
-        SELECT
-            COALESCE(encounter_type, 'Unknown') AS encounter_type,
-            COUNT(*) AS encounter_count,
-            ROUND(AVG(encounter_duration_minutes), 2) AS avg_duration_minutes
-        FROM encounters
-        WHERE encounter_start IS NOT NULL
-          AND substr(encounter_start, 1, 4) IN ({placeholders})
-        GROUP BY COALESCE(encounter_type, 'Unknown')
-        ORDER BY encounter_count DESC
-        LIMIT {limit}
     """
 
     num_in_clauses = query.count("IN (")
@@ -238,7 +145,7 @@ def get_top_conditions(
     selected_years: list[str] | None = None,
     limit: int = 10,
 ) -> pd.DataFrame:
-    limit = int(limit)
+    limit = max(1, int(limit))
 
     if not selected_years:
         query = f"""
@@ -271,7 +178,7 @@ def get_top_observation_types(
     selected_years: list[str] | None = None,
     limit: int = 10,
 ) -> pd.DataFrame:
-    limit = int(limit)
+    limit = max(1, int(limit))
 
     if not selected_years:
         query = f"""
@@ -312,31 +219,16 @@ if __name__ == "__main__":
     project_root = Path(__file__).resolve().parents[2]
     db_path = project_root / "data" / "db" / "healthcare_reporting.db"
 
-    years = get_available_years(db_path)
-    sample_years = years[-3:] if len(years) >= 3 else years
-
-    print("Available years:")
-    print(years[:10], "..." if len(years) > 10 else "")
-    print()
-
     print("Overview metrics:")
-    print(get_overview_metrics(db_path, selected_years=sample_years))
-    print()
-
-    print("Encounters by year:")
-    print(get_encounters_by_year(db_path, selected_years=sample_years).head())
-    print()
-
-    print("Encounters by month:")
-    print(get_encounters_by_month(db_path, selected_years=sample_years).head())
-    print()
-
-    print("Top encounter types:")
-    print(get_top_encounter_types(db_path, selected_years=sample_years).head())
+    print(get_overview_metrics(db_path))
     print()
 
     print("Top conditions:")
-    print(get_top_conditions(db_path, selected_years=sample_years).head())
+    print(get_top_conditions(db_path).head())
+    print()
+
+    print("Top observation types:")
+    print(get_top_observation_types(db_path).head())
     print()
 
     print("Data quality summary:")
