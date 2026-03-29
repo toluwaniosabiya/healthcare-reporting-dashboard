@@ -33,7 +33,6 @@ SELECT
     COUNT(*) AS encounter_count
 FROM encounters
 WHERE encounter_start IS NOT NULL
-  AND CAST(substr(encounter_start, 1, 4) AS INTEGER) >= 2000
 GROUP BY substr(encounter_start, 6, 2)
 ORDER BY encounter_month;
 
@@ -43,7 +42,6 @@ SELECT
     COUNT(*) AS encounter_count
 FROM encounters
 WHERE encounter_start IS NOT NULL
-  AND CAST(substr(encounter_start, 1, 4) AS INTEGER) >= 2000
 GROUP BY substr(encounter_start, 1, 4)
 ORDER BY encounter_year;
 
