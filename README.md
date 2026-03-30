@@ -21,7 +21,7 @@ It is designed to reflect **real-world health informatics workflows**, combining
 
 The entire solution is built on a **7-layer operating model** that ensures data flows from raw ingestion to decision support in a governed and explainable way.
 
-![Operating Model](assets/homepage-image/operating-model.png)
+![Operating Model](assets/images/operating-model.png)
 
 ### Key Philosophy:
 > Reporting quality = Data quality + Governance + Usability
