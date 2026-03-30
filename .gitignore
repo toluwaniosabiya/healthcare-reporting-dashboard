@@ -48,6 +48,7 @@ data/interim/*
 !data/raw/.gitkeep
 !data/interim/.gitkeep
 !data/db/.gitkeep
+!data/db/healthcare_reporting.db
 
 # =========================
 # Environment variables
