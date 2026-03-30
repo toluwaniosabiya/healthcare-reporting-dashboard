@@ -4,6 +4,8 @@ from pathlib import Path
 
 import streamlit as st
 
+from components.headers import render_title_header
+
 
 st.set_page_config(
     page_title="Healthcare Reporting & EMR Insights Dashboard",
@@ -14,7 +16,8 @@ st.set_page_config(
 project_root = Path(__file__).resolve().parent
 db_path = project_root / "data" / "db" / "healthcare_reporting.db"
 
-st.title("🏥 Healthcare Reporting & EMR Insights Dashboard")
+# st.title("🏥 Healthcare Reporting & EMR Insights Dashboard")
+render_title_header("🏥 Healthcare Reporting & EMR Insights Dashboard")
 st.markdown(
     """
     This dashboard demonstrates how FHIR-based clinical data can be transformed into a
@@ -37,6 +40,35 @@ else:
         "`python -m scripts.run_pipeline`"
     )
     st.stop()
+
+st.markdown("---")
+
+st.markdown(
+    """
+    ## FHIR-to-Reporting Operating Model
+
+    This dashboard is built on a structured 7-layer operating model that transforms raw FHIR data into
+    trusted, decision-ready insights.
+    """
+)
+
+# # Center the image
+# col1, col2, col3 = st.columns([1, 6, 1])
+
+# with col2:
+st.image("assets/images/operating-model.png", use_container_width=True)
+
+st.markdown("---")
+
+# st.markdown(
+#     """
+#     ### What this demonstrates
+#     - End-to-end health data transformation (FHIR → SQL → Dashboard)
+#     - Data quality as a first-class reporting component
+#     - Stakeholder-focused analytics design
+#     - Governed, explainable reporting layer
+#     """
+# )
 
 col1, col2 = st.columns(2)
 
