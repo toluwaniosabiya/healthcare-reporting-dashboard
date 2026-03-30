@@ -36,7 +36,7 @@ FHIR NDJSON → Transformation → Relational Tables → Data Quality Audit
 ---
 
 ## 📂 Project Structure
-
+```text
 healthcare-reporting-dashboard/
 │
 ├── Home.py
@@ -61,7 +61,7 @@ healthcare-reporting-dashboard/
 │
 ├── requirements.txt
 └── README.md
-
+```
 ---
 
 ## ⚙️ Data Pipeline
