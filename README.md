@@ -38,29 +38,64 @@ FHIR NDJSON → Transformation → Relational Tables → Data Quality Audit
 ## 📂 Project Structure
 ```text
 healthcare-reporting-dashboard/
-│
+├── assets
+│   └── images
+│       └── operating-model.png
+├── components
+│   ├── __init__.py
+│   ├── colors.py
+│   └── headers.py
+├── data
+│   ├── db
+│   │   └── healthcare_reporting.db
+│   ├── interim
+│   └── raw
 ├── Home.py
-├── pages/
+├── LICENSE
+├── notebooks
+├── pages
 │   ├── 1_Executive_Overview.py
 │   ├── 2_Encounter_Activity.py
 │   ├── 3_Clinical_Insights.py
 │   └── 4_Data_Quality.py
-│
-├── src/
-│   ├── transform/
-│   ├── database/
-│   ├── queries/
-│   └── app/
-│
-├── data/
-│   ├── raw/                # FHIR NDJSON (not committed)
-│   └── processed/          # Cleaned CSV outputs
-│
-├── assets/
-│   └── homepage-image/
-│
+├── README.md
 ├── requirements.txt
-└── README.md
+├── scripts
+│   ├── __init__.py
+│   ├── build_database.py
+│   └── run_pipeline.py
+├── sql
+│   ├── kpis.sql
+│   ├── schema.sql
+│   └── views.sql
+└── src
+    ├── __init__.py
+    ├── app
+    │   ├── __init__.py
+    │   ├── charts.py
+    │   ├── components.py
+    │   ├── filters.py
+    │   └── metrics.py
+    ├── config.py
+    ├── extract
+    │   ├── __init__.py
+    │   └── read_ndjson.py
+    ├── load
+    │   ├── __init__.py
+    │   └── sqlite_loader.py
+    ├── queries
+    │   ├── __init__.py
+    │   ├── clinical.py
+    │   ├── data_quality.py
+    │   ├── encounters.py
+    │   └── overview.py
+    └── transform
+        ├── __init__.py
+        ├── conditions.py
+        ├── encounters.py
+        ├── observations.py
+        ├── patients.py
+        └── quality_checks.py
 ```
 ---
 
