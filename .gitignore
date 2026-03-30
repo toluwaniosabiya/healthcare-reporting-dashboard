@@ -59,7 +59,7 @@ data/interim/*
 # =========================
 # Streamlit
 # =========================
-.streamlit/
+#.streamlit/
 
 # =========================
 # VSCode / IDE
